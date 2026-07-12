@@ -11,81 +11,121 @@ const client = new Client({
 
 const prefix = ";";
 
+function getConfig() {
+    return JSON.parse(fs.readFileSync("./config.json", "utf8"));
+}
+
+function saveConfig(config) {
+    fs.writeFileSync(
+        "./config.json",
+        JSON.stringify(config, null, 2)
+    );
+}
+
 client.once("ready", () => {
     console.log(`✅ ${client.user.tag} está en línea.`);
 });
 
+
 client.on("messageCreate", async (message) => {
     if (message.author.bot) return;
+
 
     // Ping command
     if (message.content === prefix + "ping") {
         const msg = await message.reply("🏓 Calculating...");
-        await msg.edit(`🏓 Pong! Ping: ${client.ws.ping}ms`);
+
+        await msg.edit(
+            `🏓 Pong! Ping: ${client.ws.ping}ms`
+        );
     }
 
-    // Setup logs command
+
+    // Setup log command
     if (message.content.startsWith(prefix + "setuplog")) {
+
         const channel = message.mentions.channels.first();
 
         if (!channel) {
-            return message.reply("❌ Mention a channel. Example: `;setuplog #logs`");
+            return message.reply(
+                "❌ Mention a channel. Example: `;setuplog #logs`"
+            );
         }
 
-        const config = JSON.parse(fs.readFileSync("./config.json"));
+
+        const config = getConfig();
 
         config.logChannel = channel.id;
 
-        fs.writeFileSync(
-            "./config.json",
-            JSON.stringify(config, null, 2)
-        );
+        saveConfig(config);
 
-        message.reply(`✅ Log channel set: ${channel}`);
+
+        message.reply(
+            `✅ Log channel set: ${channel}`
+        );
     }
 });
 
-// Deleted messages logs
+
+
+// Deleted messages log
 client.on("messageDelete", async (message) => {
+
     if (!message.guild) return;
 
-    const config = JSON.parse(fs.readFileSync("./config.json"));
+    const config = getConfig();
 
     if (!config.logChannel) return;
 
-    const logChannel = client.channels.cache.get(config.logChannel);
+
+    const logChannel = client.channels.cache.get(
+        config.logChannel
+    );
 
     if (!logChannel) return;
 
+
     logChannel.send(
-        `🗑️ **Message Deleted**\n` +
-        `👤 User: ${message.author}\n` +
+        `🗑️ **Message Deleted**\n\n` +
+        `👤 User: ${message.author || "Unknown"}\n` +
         `📍 Channel: ${message.channel}\n` +
         `💬 Content:\n${message.content || "No content"}`
     );
 });
 
-// Edited messages logs
+
+
+
+// Edited messages log
 client.on("messageUpdate", async (oldMessage, newMessage) => {
+
     if (!oldMessage.guild) return;
+
     if (oldMessage.content === newMessage.content) return;
 
-    const config = JSON.parse(fs.readFileSync("./config.json"));
+
+    const config = getConfig();
 
     if (!config.logChannel) return;
 
-    const logChannel = client.channels.cache.get(config.logChannel);
+
+    const logChannel = client.channels.cache.get(
+        config.logChannel
+    );
 
     if (!logChannel) return;
 
+
     logChannel.send(
-        `✏️ **Message Edited**\n` +
-        `👤 User: ${oldMessage.author}\n` +
+        `✏️ **Message Edited**\n\n` +
+        `👤 User: ${oldMessage.author || "Unknown"}\n` +
         `📍 Channel: ${oldMessage.channel}\n\n` +
-        `**Before:**\n${oldMessage.content}\n\n` +
-        `**After:**\n${newMessage.content}`
+        `**Before:**\n${oldMessage.content || "No content"}\n\n` +
+        `**After:**\n${newMessage.content || "No content"}`
     );
 });
 
 
-client.login("process.env.TOKEN");
+
+// Login
+client.login(process.env.TOKEN);
