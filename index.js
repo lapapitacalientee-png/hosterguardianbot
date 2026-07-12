@@ -1,5 +1,5 @@
-const fs = require("fs");
 const { Client, GatewayIntentBits } = require("discord.js");
+const fs = require("fs");
 
 const client = new Client({
     intents: [
@@ -11,121 +11,86 @@ const client = new Client({
 
 const prefix = ";";
 
-function getConfig() {
-    return JSON.parse(fs.readFileSync("./config.json", "utf8"));
+client.commands = new Map();
+
+
+// Load commands
+const commandFiles = fs.readdirSync("./commands");
+
+for (const file of commandFiles) {
+
+    const command = require(`./commands/${file}`);
+
+    client.commands.set(command.name, command);
+
 }
 
-function saveConfig(config) {
-    fs.writeFileSync(
-        "./config.json",
-        JSON.stringify(config, null, 2)
-    );
+
+// Load events
+const eventFiles = fs.readdirSync("./events");
+
+for (const file of eventFiles) {
+
+    const event = require(`./events/${file}`);
+
+    event(client);
+
 }
 
-client.once("ready", () => {
-    console.log(`✅ ${client.user.tag} está en línea.`);
-});
 
-
+// Command handler
 client.on("messageCreate", async (message) => {
+
     if (message.author.bot) return;
 
+    if (!message.content.startsWith(prefix)) return;
 
-    // Ping command
-    if (message.content === prefix + "ping") {
-        const msg = await message.reply("🏓 Calculating...");
 
-        await msg.edit(
-            `🏓 Pong! Ping: ${client.ws.ping}ms`
+    const args = message.content
+        .slice(prefix.length)
+        .trim()
+        .split(/ +/);
+
+
+    const commandName = args.shift().toLowerCase();
+
+
+    const command = client.commands.get(commandName);
+
+
+    if (!command) return;
+
+
+    try {
+
+        await command.execute(
+            message,
+            client,
+            args
         );
-    }
 
+    } catch (error) {
 
-    // Setup log command
-    if (message.content.startsWith(prefix + "setuplog")) {
-
-        const channel = message.mentions.channels.first();
-
-        if (!channel) {
-            return message.reply(
-                "❌ Mention a channel. Example: `;setuplog #logs`"
-            );
-        }
-
-
-        const config = getConfig();
-
-        config.logChannel = channel.id;
-
-        saveConfig(config);
-
+        console.log(error);
 
         message.reply(
-            `✅ Log channel set: ${channel}`
+            "❌ An error occurred while executing this command."
         );
+
     }
+
 });
 
 
 
-// Deleted messages log
-client.on("messageDelete", async (message) => {
+client.once("ready", () => {
 
-    if (!message.guild) return;
-
-    const config = getConfig();
-
-    if (!config.logChannel) return;
-
-
-    const logChannel = client.channels.cache.get(
-        config.logChannel
+    console.log(
+        `✅ ${client.user.tag} is online.`
     );
 
-    if (!logChannel) return;
-
-
-    logChannel.send(
-        `🗑️ **Message Deleted**\n\n` +
-        `👤 User: ${message.author || "Unknown"}\n` +
-        `📍 Channel: ${message.channel}\n` +
-        `💬 Content:\n${message.content || "No content"}`
-    );
 });
 
 
 
-
-// Edited messages log
-client.on("messageUpdate", async (oldMessage, newMessage) => {
-
-    if (!oldMessage.guild) return;
-
-    if (oldMessage.content === newMessage.content) return;
-
-
-    const config = getConfig();
-
-    if (!config.logChannel) return;
-
-
-    const logChannel = client.channels.cache.get(
-        config.logChannel
-    );
-
-    if (!logChannel) return;
-
-
-    logChannel.send(
-        `✏️ **Message Edited**\n\n` +
-        `👤 User: ${oldMessage.author || "Unknown"}\n` +
-        `📍 Channel: ${oldMessage.channel}\n\n` +
-        `**Before:**\n${oldMessage.content || "No content"}\n\n` +
-        `**After:**\n${newMessage.content || "No content"}`
-    );
-});
-
-
-
-// Login
 client.login(process.env.TOKEN);
