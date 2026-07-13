@@ -1,6 +1,11 @@
 const { Client, GatewayIntentBits } = require("discord.js");
 const fs = require("fs");
 
+const {
+    checkExpiredClaims,
+    check2HourClaims
+} = require("./utils/claims");
+
 const client = new Client({
     intents: [
         GatewayIntentBits.Guilds,
@@ -88,6 +93,11 @@ client.once("ready", () => {
     console.log(
         `✅ ${client.user.tag} is online.`
     );
+
+    setInterval(() => {
+        checkExpiredClaims(client);
+        check2HourClaims(client);
+    }, 60 * 1000); // revisa cada 1 minuto
 
 });
 
