@@ -52,7 +52,7 @@ function cleanOldClaims() {
     if (changed) saveClaims(claims);
 }
 
-// Revisa claims cuyo tiempo ya terminó y avisa por DM
+// Revisa claims cuyo tiempo ya terminó: borra el mensaje y avisa por DM
 async function checkExpiredClaims(client) {
 
     const claims = getClaims();
@@ -64,15 +64,28 @@ async function checkExpiredClaims(client) {
 
         if (!claim.reminded && claim.expires <= Date.now()) {
 
+            // Intenta borrar el mensaje del claim en el canal
+            try {
+
+                const channel = await client.channels.fetch(claim.channelID);
+                const msg = await channel.messages.fetch(claim.messageID);
+
+                if (msg) await msg.delete().catch(() => {});
+
+            } catch (err) {
+                // El mensaje ya no existe o no se pudo obtener, no pasa nada
+            }
+
+            // Envía confirmación por DM al usuario
             try {
 
                 const user = await client.users.fetch(claim.userID);
 
                 const embed = new EmbedBuilder()
-                    .setColor("Orange")
-                    .setTitle("⚠️ Claim Expired")
+                    .setColor("Green")
+                    .setTitle("✅ Claim Message Deleted")
                     .setDescription(
-                        "Please delete your message if you don't want to receive a verbal warning!"
+                        "Your claim message has been successfully deleted.\n\nDon't forget to save your roleplay in your portfolio!"
                     )
                     .setTimestamp();
 
@@ -93,77 +106,10 @@ async function checkExpiredClaims(client) {
 
 }
 
-// Revisa si pasaron 2 horas y el mensaje del claim sigue publicado
-async function check2HourClaims(client) {
-
-    const claims = getClaims();
-    let changed = false;
-
-    for (const id in claims) {
-
-        const claim = claims[id];
-
-        if (claim.reminded2h) continue;
-        if (!claim.created) continue;
-
-        const createdTime = new Date(claim.created).getTime();
-        const twoHours = 2 * 60 * 60 * 1000;
-
-        if (Date.now() - createdTime >= twoHours) {
-
-            let stillExists = false;
-
-            try {
-
-                const channel = await client.channels.fetch(claim.channelID);
-                const msg = await channel.messages.fetch(claim.messageID);
-
-                if (msg) stillExists = true;
-
-            } catch (err) {
-                // El mensaje ya no existe o fue borrado, no hace falta avisar
-                stillExists = false;
-            }
-
-            if (stillExists) {
-
-                try {
-
-                    const user = await client.users.fetch(claim.userID);
-
-                    const embed = new EmbedBuilder()
-                        .setColor("Red")
-                        .setTitle("⚠️ Reminder")
-                        .setDescription(
-                            "You didn't delete the message! Please remember, or you'll receive another verbal sanction."
-                        )
-                        .setTimestamp();
-
-                    await user.send({ embeds: [embed] }).catch(() => {});
-
-                } catch (err) {
-                    console.log(`Could not DM user ${claim.userID}:`, err.message);
-                }
-
-            }
-
-            claim.reminded2h = true;
-            changed = true;
-
-        }
-
-    }
-
-    if (changed) saveClaims(claims);
-
-}
-
 module.exports = {
     getClaims,
     saveClaims,
     parseTime,
     cleanOldClaims,
-    checkExpiredClaims,
-    check2HourClaims
+    checkExpiredClaims
 };
-            
