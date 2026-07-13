@@ -7,9 +7,15 @@ const {
     saveClaims
 } = require("../utils/claims");
 
+const {
+    addToHistory
+} = require("../utils/history");
+
 module.exports = {
 
     name: "cancelclaim",
+
+    description: "Cancel your active claim.",
 
     async execute(message) {
 
@@ -20,6 +26,8 @@ module.exports = {
         for (const id in claims) {
 
             if (claims[id].userID === message.author.id) {
+
+                addToHistory(claims[id], "cancelled");
 
                 delete claims[id];
 
