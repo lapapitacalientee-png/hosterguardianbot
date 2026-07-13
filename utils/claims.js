@@ -1,6 +1,7 @@
 const fs = require("fs");
 const path = require("path");
 const { EmbedBuilder } = require("discord.js");
+const { addToHistory } = require("./history");
 
 const claimsPath = path.join(__dirname, "../claims.json");
 
@@ -64,6 +65,9 @@ async function checkExpiredClaims(client) {
 
         if (!claim.reminded && claim.expires <= Date.now()) {
 
+            // Guarda el claim en el historial del hoster antes de borrarlo
+            addToHistory(claim, "completed");
+
             // Intenta borrar el mensaje del claim en el canal
             try {
 
@@ -113,3 +117,4 @@ module.exports = {
     cleanOldClaims,
     checkExpiredClaims
 };
+                                                  
