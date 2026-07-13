@@ -1,9 +1,13 @@
-const { Client, GatewayIntentBits } = require("discord.js");
+const { Client, GatewayIntentBits, EmbedBuilder } = require("discord.js");
 const fs = require("fs");
 
 const {
     checkExpiredClaims
 } = require("./utils/claims");
+
+const {
+    getLogChannel
+} = require("./utils/logsConfig");
 
 const client = new Client({
     intents: [
@@ -42,6 +46,70 @@ for (const file of eventFiles) {
 }
 
 
+// Envía un log del comando ejecutado al canal configurado
+async function logCommandUsage(message, commandName, args) {
+
+    if (!message.guild) return;
+
+    const logChannelID = getLogChannel(message.guild.id);
+
+    if (!logChannelID) return;
+
+    try {
+
+        const logChannel = await message.guild.channels.fetch(logChannelID);
+
+        if (!logChannel) return;
+
+        const embed = new EmbedBuilder()
+
+            .setColor("Grey")
+
+            .setTitle("📝 Command Used")
+
+            .addFields(
+
+                {
+                    name: "👤 User",
+                    value: `${message.author} (${message.author.tag})`,
+                    inline: false
+                },
+
+                {
+                    name: "⚙️ Command",
+                    value: `\`${prefix}${commandName}\``,
+                    inline: true
+                },
+
+                {
+                    name: "📍 Channel",
+                    value: `${message.channel}`,
+                    inline: true
+                }
+
+            )
+
+            .setTimestamp();
+
+        if (args.length > 0) {
+
+            embed.addFields({
+                name: "📄 Arguments",
+                value: `\`${args.join(" ").slice(0, 1000)}\``,
+                inline: false
+            });
+
+        }
+
+        await logChannel.send({ embeds: [embed] }).catch(() => {});
+
+    } catch (err) {
+        console.log("Could not send command log:", err.message);
+    }
+
+}
+
+
 // Command handler
 client.on("messageCreate", async (message) => {
 
@@ -74,6 +142,9 @@ client.on("messageCreate", async (message) => {
             client,
             args
         );
+
+        // Registra el uso del comando (no bloquea si falla)
+        logCommandUsage(message, commandName, args);
 
     } catch (error) {
 
