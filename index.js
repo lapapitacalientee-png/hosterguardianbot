@@ -9,7 +9,7 @@ const client = new Client({
     ]
 });
 
-const prefix = ";";
+const prefix = "!";
 
 client.commands = new Map();
 
