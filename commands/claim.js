@@ -74,7 +74,7 @@ module.exports = {
 
         const id = Date.now().toString();
 
-        claims[id] = {
+        const claim = claims[id] = {
 
             userID: message.author.id,
 
@@ -86,11 +86,11 @@ module.exports = {
 
             expires: expire,
 
-            reminded: false
+            reminded: false,
+
+            reminded2h: false
 
         };
-
-        saveClaims(claims);
 
         await message.delete().catch(() => {});
 
@@ -132,9 +132,14 @@ module.exports = {
 
             .setTimestamp();
 
-        message.channel.send({
+        const sentMessage = await message.channel.send({
             embeds: [embed]
         });
+
+        claim.messageID = sentMessage.id;
+        claim.channelID = sentMessage.channel.id;
+
+        saveClaims(claims);
 
     }
 
