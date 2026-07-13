@@ -62,7 +62,9 @@ client.on("messageCreate", async (message) => {
     const command = client.commands.get(commandName);
 
 
-    if (!command) return;
+    if (!command) {
+        return message.reply("```\nError: try with !help\n```");
+    }
 
 
     try {
