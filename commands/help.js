@@ -1,56 +1,32 @@
-const {
-    EmbedBuilder
-} = require("discord.js");
-
 module.exports = {
 
     name: "help",
 
-    async execute(message) {
+    description: "Shows this message",
 
-        const embed = new EmbedBuilder()
+    async execute(message, client) {
 
-            .setColor("Blue")
+        const commands = [...client.commands.values()]
+            .sort((a, b) => a.name.localeCompare(b.name));
 
-            .setTitle("📚 RP Claim System - Commands")
+        const longestName = Math.max(
+            ...commands.map(cmd => cmd.name.length)
+        );
 
-            .setDescription(
-                "Here are all available claim commands:"
-            )
+        const lines = commands.map(cmd => {
 
-            .addFields(
+            const padding = " ".repeat(longestName - cmd.name.length + 2);
 
-                {
-                    name: "📌 !claim",
-                    value: "Create a new roleplay claim."
-                },
+            return `  ${cmd.name}${padding}${cmd.description || ""}`;
 
-                {
-                    name: "📋 !currentclaims",
-                    value: "View all active roleplay claims."
-                },
-
-                {
-                    name: "❌ !cancelclaim",
-                    value: "Cancel your active claim."
-                },
-
-                {
-                    name: "🗑️ !resetclaimlist",
-                    value: "Reset all active claims (Administrator only)."
-                }
-
-            )
-
-            .setTimestamp()
-
-            .setFooter({
-                text: "RP Claim System"
-            });
-
-        return message.channel.send({
-            embeds: [embed]
         });
+
+        const content =
+            "```\nNo Category:\n" +
+            lines.join("\n") +
+            "\n```";
+
+        return message.channel.send(content);
 
     }
 
