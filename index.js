@@ -2,8 +2,7 @@ const { Client, GatewayIntentBits } = require("discord.js");
 const fs = require("fs");
 
 const {
-    checkExpiredClaims,
-    check2HourClaims
+    checkExpiredClaims
 } = require("./utils/claims");
 
 const client = new Client({
@@ -96,7 +95,6 @@ client.once("ready", () => {
 
     setInterval(() => {
         checkExpiredClaims(client);
-        check2HourClaims(client);
     }, 60 * 1000); // revisa cada 1 minuto
 
 });
