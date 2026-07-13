@@ -63,9 +63,11 @@ module.exports = {
 
             const data = await response.json();
 
+            console.log("Gemini raw response:", JSON.stringify(data, null, 2));
+
             const answer =
                 data?.candidates?.[0]?.content?.parts?.[0]?.text ||
-                "Sorry, I couldn't generate a response.";
+                `Sorry, I couldn't generate a response. (${data?.error?.message || "unknown reason"})`;
 
             const embed = new EmbedBuilder()
 
@@ -117,4 +119,4 @@ module.exports = {
     }
 
 };
-                  
+        
