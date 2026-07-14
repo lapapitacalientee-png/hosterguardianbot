@@ -15,12 +15,26 @@ const questions = [
     "Do you promise to handle sensitive information, such as private reports, responsibly and confidentially? (yes/no)"
 ];
 
+// Rastrea quién tiene un formulario abierto en este momento, para evitar sesiones duplicadas
+const activeSessions = new Set();
+
 module.exports = (client) => {
 
     client.on("interactionCreate", async (interaction) => {
 
         if (!interaction.isButton()) return;
         if (interaction.customId !== "start_hoster_verify") return;
+
+        if (activeSessions.has(interaction.user.id)) {
+
+            return interaction.reply({
+                content: "⚠️ You already have a verification form in progress! Check your DMs and finish answering it first.",
+                ephemeral: true
+            });
+
+        }
+
+        activeSessions.add(interaction.user.id);
 
         let dmChannel;
 
@@ -110,9 +124,13 @@ module.exports = (client) => {
                 ]
             }).catch(() => {});
 
+        } finally {
+
+            activeSessions.delete(interaction.user.id);
+
         }
 
     });
 
 };
-          
+                        
