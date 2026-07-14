@@ -1,77 +1,59 @@
-const {
-    EmbedBuilder
-} = require("discord.js");
+const fs = require("fs");
+const path = require("path");
 
-const {
-    setAfk,
-    getAfk
-} = require("../utils/afk");
+const afkPath = path.join(__dirname, "../afk.json");
+
+function getAfkList() {
+    if (!fs.existsSync(afkPath)) {
+        fs.writeFileSync(afkPath, JSON.stringify({}));
+    }
+    const data = fs.readFileSync(afkPath, "utf8");
+    return JSON.parse(data);
+}
+
+function saveAfkList(data) {
+    fs.writeFileSync(afkPath, JSON.stringify(data, null, 2));
+}
+
+function setAfk(userID, reason, originalNickname) {
+
+    const data = getAfkList();
+
+    data[userID] = {
+        reason: reason || "AFK",
+        since: Date.now(),
+        originalNickname: originalNickname || null
+    };
+
+    saveAfkList(data);
+
+}
+
+function removeAfk(userID) {
+
+    const data = getAfkList();
+
+    const entry = data[userID] || null;
+
+    delete data[userID];
+
+    saveAfkList(data);
+
+    return entry;
+
+}
+
+function getAfk(userID) {
+
+    const data = getAfkList();
+    return data[userID] || null;
+
+}
 
 module.exports = {
-
-    name: "afk",
-
-    description: "Set yourself as AFK.",
-
-    async execute(message, client, args) {
-
-        const already = getAfk(message.author.id);
-
-        if (already) {
-
-            return message.reply({
-                embeds: [
-                    new EmbedBuilder()
-                        .setColor("Orange")
-                        .setTitle("💤 Already AFK")
-                        .setDescription("You're already marked as AFK.")
-                ]
-            });
-
-        }
-
-        const reason = args.join(" ") || "AFK";
-
-        const originalNickname = message.member.nickname;
-
-        setAfk(message.author.id, reason, originalNickname);
-
-        // Intenta agregar el prefijo [AFK] al apodo, si el bot tiene permiso
-        try {
-
-            const base = message.member.nickname || message.author.username;
-
-            let newNick = `[AFK] ${base}`;
-
-            if (newNick.length > 32) {
-                newNick = newNick.slice(0, 32);
-            }
-
-            await message.member.setNickname(newNick);
-
-        } catch (err) {
-            // Si no tiene permiso (ej. es el dueño del server), simplemente lo ignora
-        }
-
-        const embed = new EmbedBuilder()
-
-            .setColor("Grey")
-
-            .setTitle("💤 AFK Set")
-
-            .setDescription(`You are now AFK: **${reason}**`)
-
-            .setFooter({
-                text: "I'll let others know if they mention you."
-            })
-
-            .setTimestamp();
-
-        return message.channel.send({
-            embeds: [embed]
-        });
-
-    }
-
+    getAfkList,
+    saveAfkList,
+    setAfk,
+    removeAfk,
+    getAfk
 };
-
