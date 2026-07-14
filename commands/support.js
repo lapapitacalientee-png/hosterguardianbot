@@ -46,6 +46,7 @@ module.exports = {
                                         "You are a helpful support assistant for a Discord roleplay hosting server. " +
                                         "Hosters use commands like !claim, !currentclaims, !cancelclaim, and !help. " +
                                         "Answer questions clearly and briefly, in a friendly tone."
+                
                                 }
                             ]
                         },
