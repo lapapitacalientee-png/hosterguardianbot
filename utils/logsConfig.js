@@ -35,9 +35,21 @@ function getLogChannel(guildID) {
 
 }
 
+// Removes the saved log channel for a specific server
+function clearLogChannel(guildID) {
+
+    const config = getLogConfig();
+
+    delete config[guildID];
+
+    saveLogConfig(config);
+
+}
+
 module.exports = {
     getLogConfig,
     saveLogConfig,
     setLogChannel,
-    getLogChannel
+    getLogChannel,
+    clearLogChannel
 };
